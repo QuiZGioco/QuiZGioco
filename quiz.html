@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>QuiZGioco</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22QuiZGioco%22,%22short_name%22:%22QuiZGioco%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22,%22background_color%22:%22%230B0F1A%22,%22theme_color%22:%22%23FF2D55%22,%22orientation%22:%22portrait%22}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuiZGioco">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;overflow:hidden;height:100%}
+body{font-family:'Outfit',-apple-system,Helvetica,sans-serif;background-color:#0B0F1A;color:#FFFFFF;height:100%;-webkit-font-smoothing:antialiased;overflow:hidden;position:fixed;width:100%;overscroll-behavior:none}
+input,textarea,select{-webkit-user-select:text;user-select:text}
+.app{max-width:480px;margin:0 auto;height:100%;position:relative;overflow:hidden}
+.screen{display:none;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px;padding-top:env(safe-area-inset-top,20px);padding-bottom:110px}
+.screen.active{display:block;-webkit-animation:fadeIn 0.3s ease;animation:fadeIn 0.3s ease}
+@-webkit-keyframes fadeIn{from{opacity:0;-webkit-transform:translateY(8px)}to{opacity:1;-webkit-transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.brand{font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-weight:800;letter-spacing:0.5px;display:inline-block}
+.brand .qui{color:#FFFFFF}.brand .zl{color:#FF2D55;font-style:italic;display:inline-block;-webkit-transform:skewX(-10deg);transform:skewX(-10deg);margin:0 1px}.brand .gioco{color:#FFFFFF}
+.login-wrap{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;min-height:100%;padding:24px;position:relative}
+.login-glow{position:absolute;top:0;left:0;right:0;height:400px;background:radial-gradient(ellipse at 50% 0%,rgba(255,45,85,0.12) 0%,transparent 70%);pointer-events:none}
+.login-box{width:100%;max-width:320px;text-align:center;position:relative;z-index:1}
+.logo-icon{width:88px;height:88px;margin:0 auto 20px;background-image:-webkit-linear-gradient(315deg,#FF2D55,#FF9500);background-image:linear-gradient(135deg,#FF2D55,#FF9500);border-radius:26px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-size:40px;-webkit-box-shadow:0 12px 40px rgba(255,45,85,0.35);box-shadow:0 12px 40px rgba(255,45,85,0.35)}
+.logo-sub{color:#5A6577;font-size:13px;font-weight:600;margin-top:6px;margin-bottom:28px;text-transform:uppercase;letter-spacing:2px}
+.field-input{width:100%;padding:14px 16px;background-color:#1A2236;border:2px solid #2A3450;border-radius:12px;color:#FFFFFF;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:16px;font-weight:600;outline:none;-webkit-appearance:none;appearance:none;margin-bottom:12px}
+.field-input:focus{border-color:#FF2D55}
+.field-input::-webkit-input-placeholder{color:#5A6577}
+.field-label{display:block;font-size:11px;font-weight:700;color:#A0AEC0;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;text-align:left}
+.btn{padding:16px;border:none;border-radius:12px;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;width:100%;text-align:center;-webkit-appearance:none;appearance:none;display:block}
+.btn:active{-webkit-transform:scale(0.97);transform:scale(0.97)}
+.btn:disabled{opacity:0.4}
+.btn-red{background-image:-webkit-linear-gradient(315deg,#FF2D55,#D91A40);background-image:linear-gradient(135deg,#FF2D55,#D91A40);color:#FFFFFF;-webkit-box-shadow:0 6px 24px rgba(255,45,85,0.3);box-shadow:0 6px 24px rgba(255,45,85,0.3)}
+.btn-ghost{background-color:#1A2236;color:#A0AEC0;border:1px solid #2A3450}
+.login-footer{color:#5A6577;font-size:11px;margin-top:20px;line-height:1.7}
+.topbar{padding:16px 20px 8px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:space-between;justify-content:space-between}
+.topbar-user{font-size:13px;font-weight:700;color:#A0AEC0}
+.topbar-pts{font-size:13px;font-weight:800;color:#FFD60A}
+.home-hero{text-align:center;padding:24px 16px;margin-bottom:16px;background-image:-webkit-linear-gradient(315deg,rgba(255,45,85,0.08),rgba(255,149,0,0.05));background-image:linear-gradient(135deg,rgba(255,45,85,0.08),rgba(255,149,0,0.05));border-radius:20px;border:1px solid rgba(255,45,85,0.1)}
+.home-hero-pts{font-size:52px;font-weight:800;color:#FFFFFF;line-height:1}
+.home-hero-lbl{font-size:11px;font-weight:700;color:#5A6577;text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+.home-hero-level{font-size:14px;font-weight:700;color:#FF2D55;margin-top:8px}
+.section-label{font-size:12px;font-weight:700;color:#A0AEC0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;margin-top:8px}
+.prize-banner{background-image:-webkit-linear-gradient(315deg,rgba(255,214,10,0.1),rgba(255,149,0,0.06));background-image:linear-gradient(135deg,rgba(255,214,10,0.1),rgba(255,149,0,0.06));border:1px solid rgba(255,214,10,0.15);border-radius:14px;padding:14px 16px;margin-bottom:6px;text-align:center}
+.prize-banner-title{font-size:11px;font-weight:700;color:#FFD60A;text-transform:uppercase;letter-spacing:1.5px}
+.prize-banner-text{font-size:15px;font-weight:700;color:#FFFFFF;margin-top:4px}
+.prize-monthly{background-color:#1A2236;border:1px solid #2A3450;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.prize-monthly-title{font-size:11px;font-weight:700;color:#A0AEC0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;text-align:center}
+.prize-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:10px;padding:6px 0}
+.prize-medal{font-size:18px;width:28px;text-align:center}
+.prize-label{-webkit-flex:1;flex:1;font-size:14px;font-weight:600}
+.aff-banner{background-image:-webkit-linear-gradient(315deg,rgba(255,45,85,0.08),rgba(255,149,0,0.05));background-image:linear-gradient(135deg,rgba(255,45,85,0.08),rgba(255,149,0,0.05));border:1px solid rgba(255,45,85,0.12);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center;text-decoration:none;display:block}
+.aff-banner:active{-webkit-transform:scale(0.98);transform:scale(0.98)}
+.aff-banner-text{font-size:14px;font-weight:700;color:#FFFFFF;line-height:1.5}
+.aff-banner-cta{font-size:13px;font-weight:700;color:#FF2D55;margin-top:8px}
+.quiz-card{background-color:#1A2236;border:1px solid #2A3450;border-radius:16px;padding:16px;margin-bottom:12px;cursor:pointer;position:relative;overflow:hidden}
+.quiz-card:active{-webkit-transform:scale(0.98);transform:scale(0.98)}
+.quiz-card-top{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:flex-start;align-items:flex-start}
+.quiz-card-title{font-size:17px;font-weight:700;line-height:1.3;-webkit-flex:1;flex:1;padding-right:10px}
+.quiz-tag{font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+.quiz-tag.live{background-color:rgba(255,45,85,0.15);color:#FF2D55}
+.quiz-tag.done{background-color:rgba(52,199,89,0.15);color:#34C759}
+.quiz-tag.spec{background-color:rgba(255,214,10,0.15);color:#FFD60A}
+.quiz-card-meta{font-size:11px;color:#5A6577;font-weight:500;margin-top:8px;display:-webkit-flex;display:flex;gap:10px;-webkit-flex-wrap:wrap;flex-wrap:wrap}
+.quiz-card-go{margin-top:12px;padding:10px;border:none;border-radius:10px;width:100%;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;cursor:pointer;-webkit-appearance:none;background-image:-webkit-linear-gradient(315deg,#FF2D55,#D91A40);background-image:linear-gradient(135deg,#FF2D55,#D91A40);color:#FFFFFF}
+.quiz-card-go:active{-webkit-transform:scale(0.97);transform:scale(0.97)}
+.quiz-card-score{margin-top:12px;padding:10px;border-radius:10px;width:100%;text-align:center;background-color:rgba(52,199,89,0.08);border:1px solid rgba(52,199,89,0.15);font-size:13px;font-weight:700;color:#34C759}
+.play-header{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;margin-bottom:16px}
+.play-count{font-size:13px;font-weight:700;color:#A0AEC0}
+.play-quit{font-size:12px;font-weight:700;color:#FF2D55;background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;-webkit-appearance:none}
+.timer-bar{width:100%;height:6px;background-color:#1A2236;border-radius:3px;margin-bottom:20px;overflow:hidden}
+.timer-fill{height:100%;border-radius:3px;-webkit-transition:width 0.3s linear,background-color 0.3s;transition:width 0.3s linear,background-color 0.3s}
+.timer-fill.green{background-color:#34C759}.timer-fill.yellow{background-color:#FFD60A}.timer-fill.red{background-color:#FF2D55}
+.timer-num{text-align:center;font-size:42px;font-weight:800;margin-bottom:16px;line-height:1}
+.q-box{background-color:#1A2236;border:1px solid #2A3450;border-radius:20px;padding:22px 18px;margin-bottom:16px}
+.q-text{font-size:18px;font-weight:700;line-height:1.4;text-align:center}
+.q-cat{font-size:10px;font-weight:700;color:#5A6577;text-transform:uppercase;letter-spacing:1.5px;text-align:center;margin-bottom:10px}
+.ans-list{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:10px}
+.ans-btn{width:100%;padding:16px;background-color:#1A2236;border:2px solid #2A3450;border-radius:14px;color:#FFFFFF;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:15px;font-weight:600;text-align:left;cursor:pointer;-webkit-appearance:none;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:12px;-webkit-transition:border-color 0.15s,background-color 0.15s;transition:border-color 0.15s,background-color 0.15s}
+.ans-btn:active{-webkit-transform:scale(0.98);transform:scale(0.98)}
+.ans-btn .letter{width:32px;height:32px;border-radius:10px;background-color:#111827;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;font-size:14px;font-weight:800;color:#5A6577;-webkit-flex-shrink:0;flex-shrink:0}
+.ans-btn .atxt{-webkit-flex:1;flex:1;line-height:1.3}
+.ans-btn.correct{border-color:#34C759;background-color:rgba(52,199,89,0.1)}.ans-btn.correct .letter{background-color:#34C759;color:#FFFFFF}
+.ans-btn.wrong{border-color:#FF2D55;background-color:rgba(255,45,85,0.1)}.ans-btn.wrong .letter{background-color:#FF2D55;color:#FFFFFF}
+.ans-btn.dim{opacity:0.35}.ans-btn.disabled{pointer-events:none}
+.res-wrap{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;min-height:80%;text-align:center;padding:20px}
+.res-icon{font-size:64px;margin-bottom:16px}
+.res-title{font-size:28px;font-weight:800;margin-bottom:4px}
+.res-sub{font-size:14px;color:#A0AEC0;font-weight:500;margin-bottom:24px}
+.res-score-box{background-image:-webkit-linear-gradient(315deg,rgba(255,45,85,0.1),rgba(255,149,0,0.06));background-image:linear-gradient(135deg,rgba(255,45,85,0.1),rgba(255,149,0,0.06));border:1px solid rgba(255,45,85,0.15);border-radius:20px;padding:24px 32px;margin-bottom:20px}
+.res-score-val{font-size:56px;font-weight:800;color:#FFFFFF;line-height:1}
+.res-score-lbl{font-size:11px;font-weight:700;color:#5A6577;text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+.res-stats{display:-webkit-flex;display:flex;gap:16px;margin-bottom:20px}
+.res-stat{text-align:center}
+.res-stat-val{font-size:24px;font-weight:800}
+.res-stat-lbl{font-size:10px;color:#5A6577;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.res-stat-val.g{color:#34C759}.res-stat-val.r{color:#FF2D55}.res-stat-val.y{color:#FFD60A}
+.res-pos-box{background-color:#1A2236;border:1px solid #2A3450;border-radius:14px;padding:12px 20px;margin-bottom:20px;width:100%}
+.res-pos-text{font-size:14px;font-weight:700;color:#A0AEC0}
+.res-pos-text span{color:#FFD60A}
+.rank-card{background-color:#1A2236;border:1px solid #2A3450;border-radius:16px;padding:16px;margin-bottom:12px}
+.rank-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:10px 12px;background-color:#111827;border-radius:12px;margin-bottom:6px;border:1px solid #1E293B}
+.rank-row.me{border-color:rgba(255,45,85,0.3);background-color:rgba(255,45,85,0.05)}
+.rank-pos{width:28px;font-size:16px;font-weight:800;color:#5A6577}
+.rank-name{-webkit-flex:1;flex:1;font-size:14px;font-weight:600}
+.rank-score{font-size:18px;font-weight:800}
+.rank-det{font-size:11px;color:#5A6577;margin-left:8px}
+.bnav{position:fixed;bottom:0;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%);max-width:480px;width:100%;z-index:100;padding:0 12px}
+.bnav-inner{display:-webkit-flex;display:flex;background-color:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:20px 20px 0 0;padding:6px 4px;padding-bottom:env(safe-area-inset-bottom,22px);-webkit-box-shadow:0 -4px 30px rgba(0,0,0,0.5);box-shadow:0 -4px 30px rgba(0,0,0,0.5)}
+.bnav-btn{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:3px;padding:8px 4px;border:none;background-color:transparent;color:#5A6577;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;position:relative;-webkit-appearance:none}
+.bnav-btn.active{color:#FF2D55}
+.bnav-btn.active::before{content:'';position:absolute;top:-6px;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%);width:20px;height:3px;background-color:#FF2D55;border-radius:2px}
+.bnav-btn svg{width:22px;height:22px;fill:currentColor}
+.toast{position:fixed;bottom:100px;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%);max-width:360px;width:calc(100% - 40px);padding:14px 18px;border-radius:12px;font-size:14px;font-weight:600;text-align:center;z-index:999;pointer-events:none;-webkit-animation:fadeIn 0.25s ease;animation:fadeIn 0.25s ease}
+.toast.success{background-color:#34C759;color:#FFFFFF}.toast.error{background-color:#FF2D55;color:#FFFFFF}.toast.info{background-color:#1A2236;color:#A0AEC0;border:1px solid #2A3450}
+.empty{text-align:center;padding:40px 20px;color:#5A6577}.empty .icon{font-size:36px;margin-bottom:8px;opacity:0.5}.empty .msg{font-size:14px;font-weight:600}
+.confetti-box{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:900;overflow:hidden}
+.confetto{position:absolute;width:8px;height:8px;border-radius:2px;top:-10px;-webkit-animation:confFall 2.5s linear forwards;animation:confFall 2.5s linear forwards}
+@-webkit-keyframes confFall{0%{-webkit-transform:translateY(0) rotate(0deg);opacity:1}100%{-webkit-transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.wa-invite{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;gap:10px;padding:14px;border-radius:12px;margin-bottom:16px;background-color:#25D366;color:#FFFFFF;text-decoration:none;font-family:'Outfit',-apple-system,Helvetica,sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;-webkit-box-shadow:0 4px 16px rgba(37,211,102,0.3);box-shadow:0 4px 16px rgba(37,211,102,0.3)}
+.wa-invite:active{-webkit-transform:scale(0.97);transform:scale(0.97)}
+.wa-invite svg{width:22px;height:22px;fill:#FFFFFF;-webkit-flex-shrink:0;flex-shrink:0}
+
+/* MODAL */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,0.7);z-index:800;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;-webkit-animation:fadeIn 0.2s ease;animation:fadeIn 0.2s ease}
+.modal-box{background-color:#1A2236;border:1px solid #2A3450;border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center}
+.modal-icon{font-size:48px;margin-bottom:12px}
+.modal-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.modal-text{font-size:14px;color:#A0AEC0;font-weight:500;margin-bottom:20px;line-height:1.5}
+.modal-btn{padding:14px;border:none;border-radius:12px;font-family:‘Outfit’,-apple-system,Helvetica,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;width:100%;-webkit-appearance:none;background-image:-webkit-linear-gradient(315deg,#FF2D55,#D91A40);background-image:linear-gradient(135deg,#FF2D55,#D91A40);color:#FFFFFF;-webkit-box-shadow:0 4px 16px rgba(255,45,85,0.3);box-shadow:0 4px 16px rgba(255,45,85,0.3)}
+.modal-btn:active{-webkit-transform:scale(0.97);transform:scale(0.97)}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+<!-- LOGIN -->
+
+<div class="screen active" id="s-login">
+<div class="login-wrap"><div class="login-glow"></div><div class="login-box">
+<img src="logo.png" alt="QuiZGioco" style="width:260px;max-width:90%;height:auto;margin-bottom:12px;" />
+<div class="logo-sub">Cultura sportiva</div>
+<label class="field-label">Il tuo nome</label>
+<input class="field-input" id="regName" type="text" placeholder="Es. Angelo" autocomplete="off" />
+<label class="field-label">Telefono</label>
+<input class="field-input" id="regPhone" type="tel" placeholder="Es. 3331234567" autocomplete="off" inputmode="tel" />
+<button class="btn btn-red" onclick="doRegister()">REGISTRATI E GIOCA</button>
+<p class="login-footer">Gioco gratuito di cultura sportiva.<br>Nessuna scommessa. Nessuna vincita in denaro.</p>
+</div></div>
+</div>
+
+<!-- HOME -->
+
+<div class="screen" id="s-home">
+<div class="topbar"><div><img src="logo.png" alt="QuiZGioco" style="height:28px;width:auto;" /></div><div><span class="topbar-user" id="homeUser"></span></div></div>
+<div class="home-hero"><div class="home-hero-pts" id="homePts">0</div><div class="home-hero-lbl">Punti totali</div><div class="home-hero-level" id="homeLevel"></div></div>
+<div id="prizeBanner"></div>
+<a class="wa-invite" id="waInviteBtn" href="#" target="_blank"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.61.609l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.599-.784-6.392-2.108l-.447-.34-3.09 1.035 1.035-3.09-.34-.447A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>Invita un amico</a>
+<a class="aff-banner" href="https://www.quigioco.it/signup?codAffiliato=PVRBARCELLONA&affiliato=PVRBARCELLONA" target="_blank" rel="noopener">
+<div class="aff-banner-text">Hai voglia di adrenalina con le scommesse?<br>Apri il conto e parti forte! &#128293;&#128241;</div>
+<div class="aff-banner-cta">Scopri come &#8594;</div>
+</a>
+<div class="section-label">&#9917; Quiz disponibili</div>
+<div id="quizList"><div class="empty"><div class="icon">&#9203;</div><div class="msg">Caricamento...</div></div></div>
+<div id="doneSection" style="display:none;"><div class="section-label" style="margin-top:20px;">&#10003; Completati</div><div id="doneList"></div></div>
+<div class="bnav"><div class="bnav-inner">
+<button class="bnav-btn active" onclick="goNav(0)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</button>
+<button class="bnav-btn" onclick="goNav(1)"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Classifica</button>
+</div></div>
+</div>
+
+<!-- CLASSIFICA -->
+
+<div class="screen" id="s-rank">
+<div class="topbar"><div><img src="logo.png" alt="QuiZGioco" style="height:28px;width:auto;" /></div><div><span class="topbar-pts" id="rankPts"></span></div></div>
+<div class="section-label">&#127942; Classifica generale</div>
+<div id="rankBox"><div class="empty"><div class="msg">Caricamento...</div></div></div>
+<div class="bnav"><div class="bnav-inner">
+<button class="bnav-btn" onclick="goNav(0)"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</button>
+<button class="bnav-btn active" onclick="goNav(1)"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Classifica</button>
+</div></div>
+</div>
+
+<!-- PLAY -->
+
+<div class="screen" id="s-play">
+<div class="play-header"><div class="play-count" id="playCount">1 / 10</div><button class="play-quit" onclick="quitGame()">&#10005; ESCI</button></div>
+<div class="timer-bar"><div class="timer-fill green" id="timerFill" style="width:100%;"></div></div>
+<div class="timer-num" id="timerNum">20</div>
+<div class="q-box"><div class="q-cat" id="playCat"></div><div class="q-text" id="playQ"></div></div>
+<div class="ans-list" id="playAns"></div>
+</div>
+
+<!-- RESULT -->
+
+<div class="screen" id="s-result">
+<div class="res-wrap">
+<div class="res-icon" id="resIcon">&#127942;</div>
+<div class="res-title" id="resTitle">Ottimo!</div>
+<div class="res-sub" id="resSub"></div>
+<div class="res-score-box"><div class="res-score-val" id="resScore">0</div><div class="res-score-lbl">Punti</div></div>
+<div class="res-stats">
+<div class="res-stat"><div class="res-stat-val g" id="resOk">0</div><div class="res-stat-lbl">Esatte</div></div>
+<div class="res-stat"><div class="res-stat-val r" id="resWrong">0</div><div class="res-stat-lbl">Errate</div></div>
+<div class="res-stat"><div class="res-stat-val y" id="resAvg">0</div><div class="res-stat-lbl">Sec medi</div></div>
+</div>
+<div class="res-pos-box" id="resPosBox" style="display:none;"><div class="res-pos-text" id="resPosText"></div></div>
+<a class="wa-invite" id="waShareBtn" href="#" target="_blank" style="width:100%;margin-bottom:10px;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.61.609l4.458-1.495A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.599-.784-6.392-2.108l-.447-.34-3.09 1.035 1.035-3.09-.34-.447A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>Sfida un amico</a>
+<button class="btn btn-red" onclick="goNav(0)" style="margin-bottom:10px;">TORNA ALLA HOME</button>
+<button class="btn btn-ghost" onclick="goNav(1)">&#127942; CLASSIFICA</button>
+</div>
+</div>
+
+</div>
+<div class="confetti-box" id="confettiBox"></div>
+<div id="modalContainer"></div>
+
+<script>
+var SUPABASE_URL='https://sopclxmogtyzkverrovy.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcGNseG1vZ3R5emt2ZXJyb3Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDQ1ODQsImV4cCI6MjA5MTY4MDU4NH0.M_dAf7DfD-IYuXfQ6O62YMbZaPv0ikFaYAbJFGBbwrU';
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var APP_URL='https://quizgioco.github.io/QuiZGioco/quiz.html';
+var MAX_PTS=100;
+var player=null;var curQuiz=null;var curQs=[];var curIdx=0;var answers=[];
+var timerInterval=null;var timerVal=0;var timerMax=20;var answered=false;var qStart=0;var playedIds=[];
+
+/* ANTI-ZOOM */
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
+document.addEventListener('gesturechange',function(e){e.preventDefault();});
+document.addEventListener('gestureend',function(e){e.preventDefault();});
+var lastTap=0;document.addEventListener('touchend',function(e){var now=Date.now();if(now-lastTap<300){e.preventDefault();}lastTap=now;},false);
+
+/* UTILS */
+function esc(s){var d=document.createElement('div');d.appendChild(document.createTextNode(s||''));return d.innerHTML;}
+function toast(m,t){var o=document.querySelector('.toast');if(o)o.remove();var e=document.createElement('div');e.className='toast '+(t||'info');e.innerHTML=m;document.body.appendChild(e);setTimeout(function(){if(e.parentNode)e.remove();},3000);}
+function showScreen(id){var all=document.querySelectorAll('.screen');for(var i=0;i<all.length;i++)all[i].classList.remove('active');document.getElementById('s-'+id).classList.add('active');}
+function goNav(i){if(i===0){showScreen('home');loadHome();}if(i===1){showScreen('rank');loadRank();}}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=a[i];a[i]=a[j];a[j]=tmp;}return a;}
+function getLevel(pts){if(pts>=5000)return'&#128081; Leggenda';if(pts>=3000)return'&#11088; Campione';if(pts>=1500)return'&#128293; Esperto';if(pts>=500)return'&#9917; Appassionato';return'&#127793; Esordiente';}
+function fireConfetti(){var box=document.getElementById('confettiBox');var colors=['#FF2D55','#34C759','#007AFF','#FFD60A','#FF9500','#AF52DE','#FFFFFF'];for(var i=0;i<50;i++){var c=document.createElement('div');c.className='confetto';c.style.left=Math.random()*100+'%';c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];c.style.width=(6+Math.random()*6)+'px';c.style.height=(6+Math.random()*6)+'px';c.style.animationDelay=(Math.random()*0.8)+'s';c.style.webkitAnimationDelay=(Math.random()*0.8)+'s';c.style.animationDuration=(2+Math.random()*1.5)+'s';c.style.webkitAnimationDuration=(2+Math.random()*1.5)+'s';box.appendChild(c);}setTimeout(function(){box.innerHTML='';},4000);}
+
+/* MODAL */
+function showModal(icon,title,text,btnText,callback){
+  var mc=document.getElementById('modalContainer');
+  mc.innerHTML='<div class="modal-overlay" onclick="closeModal()"><div class="modal-box" onclick="event.stopPropagation()"><div class="modal-icon">'+icon+'</div><div class="modal-title">'+title+'</div><div class="modal-text">'+text+'</div><button class="modal-btn" id="modalBtn">'+btnText+'</button></div></div>';
+  document.getElementById('modalBtn').onclick=function(){closeModal();if(callback)callback();};
+}
+function closeModal(){document.getElementById('modalContainer').innerHTML='';}
+
+/* WHATSAPP */
+function buildWAInvite(){var msg='\u26BD *QuiZGioco* - Metti alla prova la tua cultura sportiva!\n\nGioca gratis e sfida i tuoi amici \uD83C\uDFC6\n\n\uD83D\uDC49 '+APP_URL;return'https://wa.me/?text='+encodeURIComponent(msg);}
+function buildWAShare(title,score){var msg='\u26BD *QuiZGioco*\n\nHo totalizzato *'+score+' punti* su "'+title+'"!\n\nRiesci a battermi? \uD83D\uDCAA\n\n\uD83D\uDC49 '+APP_URL;return'https://wa.me/?text='+encodeURIComponent(msg);}
+
+/* PULIZIA NOME */
+function cleanName(n){
+  n=n.replace(/[^a-zA-ZàèéìòùÀÈÉÌÒÙ\s'-]/g,'');
+  n=n.replace(/\s+/g,' ').trim();
+  if(n.length<2)return'';
+  return n.charAt(0).toUpperCase()+n.slice(1);
+}
+
+/* PULIZIA TELEFONO */
+function cleanPhone(p){
+  p=p.replace(/[^0-9+]/g,'');
+  if(p.charAt(0)==='+')p='+'+p.slice(1).replace(/\+/g,'');
+  return p;
+}
+
+/* REGISTRAZIONE */
+function doRegister(){
+  var rawName=document.getElementById('regName').value;
+  var rawPhone=document.getElementById('regPhone').value;
+  var name=cleanName(rawName);
+  var phone=cleanPhone(rawPhone);
+
+  if(!name){toast('Inserisci un nome valido (min 2 lettere)','error');return;}
+  if(phone.length<8){toast('Inserisci un numero di telefono valido','error');return;}
+
+  /* Controlla se il telefono esiste gia */
+  sb.from('sq_players').select('*').eq('phone',phone).then(function(check){
+    if(check.data&&check.data.length>0){
+      /* Gia registrato: recupera account */
+      player=check.data[0];
+      localStorage.setItem('sqz_player_id',player.player_id);
+      localStorage.setItem('sqz_player_phone',phone);
+      showScreen('home');loadHome();
+      showModal('&#128075;','Bentornato!','Abbiamo riconosciuto il tuo numero.<br>Il tuo account e stato ripristinato.','CONTINUA');
+      return;
+    }
+    /* Nuovo giocatore */
+    var pid=typeof crypto.randomUUID==='function'?crypto.randomUUID():'p-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+    sb.from('sq_players').insert([{
+      player_id:pid,
+      player_name:name,
+      phone:phone,
+      updated_at:new Date().toISOString()
+    }]).select().then(function(res){
+      if(res.error){
+        if(res.error.message&&res.error.message.indexOf('duplicate')!==-1){
+          toast('Numero gia registrato','error');
+        }else{
+          toast('Errore: '+res.error.message,'error');
+        }
+        return;
+      }
+      player=res.data[0];
+      localStorage.setItem('sqz_player_id',pid);
+      localStorage.setItem('sqz_player_phone',phone);
+      showScreen('home');loadHome();
+      toast('Benvenuto '+esc(name)+'!','success');
+    });
+  });
+}
+
+/* AUTO-LOGIN */
+function autoLogin(){
+  var phone=localStorage.getItem('sqz_player_phone');
+  if(!phone)return;
+  sb.from('sq_players').select('*').eq('phone',phone).then(function(res){
+    if(res.data&&res.data.length>0){
+      player=res.data[0];
+      localStorage.setItem('sqz_player_id',player.player_id);
+      showScreen('home');loadHome();
+    }
+  });
+}
+
+/* HOME */
+function loadHome(){
+  if(!player)return;
+  document.getElementById('homeUser').textContent=player.player_name;
+  document.getElementById('homePts').textContent=player.total_points||0;
+  document.getElementById('homeLevel').innerHTML=getLevel(player.total_points||0);
+  document.getElementById('waInviteBtn').href=buildWAInvite();
+
+  sb.from('sq_settings').select('key,value').in('key',['weekly_prize','monthly_prizes']).then(function(r){
+    var html='';var wp='';var mp=[];
+    if(r.data){for(var i=0;i<r.data.length;i++){var s=r.data[i];
+      if(s.key==='weekly_prize'&&s.value){wp=String(s.value).replace(/"/g,'').trim();}
+      if(s.key==='monthly_prizes'&&s.value){try{mp=typeof s.value==='string'?JSON.parse(s.value):s.value;}catch(e){}}
+    }}
+    if(wp){html+='<div class="prize-banner"><div class="prize-banner-title">&#127942; Premio settimanale</div><div class="prize-banner-text">'+esc(wp)+'</div></div>';}
+    if(mp&&mp.length>0){var medals=['&#129351;','&#129352;','&#129353;'];
+      html+='<div class="prize-monthly"><div class="prize-monthly-title">&#127941; Premi mensili</div>';
+      for(var j=0;j<mp.length;j++){if(mp[j])html+='<div class="prize-row"><div class="prize-medal">'+(medals[j]||(j+1))+'</div><div class="prize-label">'+esc(String(mp[j]))+'</div></div>';}
+      html+='</div>';}
+    document.getElementById('prizeBanner').innerHTML=html;
+  });
+
+  sb.from('sq_results').select('quiz_id,score').eq('player_id',player.player_id).then(function(rr){
+    playedIds=[];var playedMap={};
+    if(rr.data){for(var i=0;i<rr.data.length;i++){playedIds.push(rr.data[i].quiz_id);playedMap[rr.data[i].quiz_id]=rr.data[i].score;}}
+    sb.from('sq_quizzes').select('*').in('status',['live','scheduled','ended']).order('created_at',{ascending:false}).then(function(qr){
+      var liveHtml='';var doneHtml='';var liveCount=0;var doneCount=0;var now=new Date();
+      if(qr.data){for(var j=0;j<qr.data.length;j++){var q=qr.data[j];var qn=0;try{qn=q.questions.length;}catch(e){}
+        var isPlayed=playedIds.indexOf(q.id)!==-1;
+        /* Logica: scheduled con start_at passato = trattalo come live */
+        var isAvailable=false;
+        if(q.status==='live'){isAvailable=true;}
+        if(q.status==='scheduled'&&q.start_at&&new Date(q.start_at)<=now){isAvailable=true;}
+        var expired=false;if(q.deadline){expired=new Date(q.deadline)<now;}
+        if(isPlayed){doneCount++;
+          doneHtml+='<div class="quiz-card"><div class="quiz-card-top"><div class="quiz-card-title">'+esc(q.title)+'</div><span class="quiz-tag done">Fatto</span></div>';
+          doneHtml+='<div class="quiz-card-meta"><span>'+esc(q.category)+'</span><span>'+qn+' domande</span></div>';
+          doneHtml+='<div class="quiz-card-score">&#10003; Punteggio: '+playedMap[q.id]+' pts</div></div>';
+        }else if(isAvailable&&!expired){liveCount++;
+          liveHtml+='<div class="quiz-card" onclick="startQuiz('+q.id+')"><div class="quiz-card-top"><div class="quiz-card-title">'+esc(q.title)+'</div>';
+          if(q.quiz_type==='speciale'){liveHtml+='<span class="quiz-tag spec">&#9733; x2</span>';}else{liveHtml+='<span class="quiz-tag live">Live</span>';}
+          liveHtml+='</div><div class="quiz-card-meta"><span>'+esc(q.category)+'</span><span>'+qn+' domande</span>';
+          if(q.deadline){var dl=new Date(q.deadline);liveHtml+='<span>Scade: '+dl.toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+'</span>';}
+          liveHtml+='</div><button class="quiz-card-go">&#9654; GIOCA ORA</button></div>';
+        }
+      }}
+      if(liveCount===0){liveHtml='<div class="empty"><div class="icon">&#128564;</div><div class="msg">Nessun quiz disponibile al momento</div></div>';}
+      document.getElementById('quizList').innerHTML=liveHtml;
+      if(doneCount>0){document.getElementById('doneSection').style.display='block';document.getElementById('doneList').innerHTML=doneHtml;}
+      else{document.getElementById('doneSection').style.display='none';}
+    });
+  });
+}
+
+/* START QUIZ */
+function startQuiz(qid){
+  sb.from('sq_quizzes').select('*').eq('id',qid).single().then(function(r){
+    if(r.error||!r.data){toast('Quiz non trovato','error');return;}
+    curQuiz=r.data;
+    if(curQuiz.status!=='live'){toast('Quiz non piu disponibile','error');return;}
+    if(playedIds.indexOf(qid)!==-1){toast('Hai gia giocato questo quiz','info');return;}
+    if(curQuiz.deadline&&new Date(curQuiz.deadline)<new Date()){toast('Quiz scaduto','error');return;}
+    curQs=[];var raw=curQuiz.questions||[];
+    /* Shuffle ordine domande */
+    var shuffledRaw=shuffle(raw);
+    for(var i=0;i<shuffledRaw.length;i++){
+      /* Shuffle risposte per ogni domanda */
+      curQs.push({question:shuffledRaw[i].question,answers:shuffle(shuffledRaw[i].answers),correct:shuffledRaw[i].correct});
+    }
+    curIdx=0;answers=[];timerMax=curQuiz.time_per_question||20;
+    showScreen('play');document.getElementById('playCat').textContent=curQuiz.category||'';showQuestion();
+  });
+}
+
+/* PLAY */
+function showQuestion(){
+  if(curIdx>=curQs.length){endGame();return;}
+  answered=false;var q=curQs[curIdx];var letters=['A','B','C','D'];
+  document.getElementById('playCount').textContent=(curIdx+1)+' / '+curQs.length;
+  document.getElementById('playQ').textContent=q.question;
+  var aHtml='';for(var i=0;i<q.answers.length;i++){
+    aHtml+='<button class="ans-btn" onclick="pickAnswer('+i+')" id="ans'+i+'"><span class="letter">'+letters[i]+'</span><span class="atxt">'+esc(q.answers[i])+'</span></button>';}
+  document.getElementById('playAns').innerHTML=aHtml;
+  timerVal=timerMax;qStart=Date.now();
+  document.getElementById('timerNum').textContent=timerVal;
+  var fill=document.getElementById('timerFill');fill.style.width='100%';fill.className='timer-fill green';
+  clearInterval(timerInterval);
+  timerInterval=setInterval(function(){
+    timerVal--;if(timerVal<0)timerVal=0;
+    document.getElementById('timerNum').textContent=timerVal;
+    var pct=(timerVal/timerMax)*100;fill.style.width=pct+'%';
+    if(pct<=25)fill.className='timer-fill red';else if(pct<=50)fill.className='timer-fill yellow';else fill.className='timer-fill green';
+    if(timerVal<=0){clearInterval(timerInterval);if(!answered)timeUp();}
+  },1000);
+}
+
+function pickAnswer(idx){
+  if(answered)return;answered=true;clearInterval(timerInterval);
+  var elapsed=(Date.now()-qStart)/1000;var q=curQs[curIdx];var picked=q.answers[idx];var isCorrect=picked===q.correct;
+  var pts=0;if(isCorrect){var ratio=Math.max(0,1-(elapsed/timerMax));pts=Math.round(MAX_PTS*ratio);if(pts<1)pts=1;if(curQuiz.quiz_type==='speciale')pts=pts*2;}
+  answers.push({question:q.question,picked:picked,correct:q.correct,is_correct:isCorrect,time:Math.round(elapsed*10)/10,points:pts});
+  var btns=document.querySelectorAll('.ans-btn');
+  for(var i=0;i<btns.length;i++){btns[i].classList.add('disabled');
+    if(q.answers[i]===q.correct)btns[i].classList.add('correct');
+    else if(i===idx&&!isCorrect)btns[i].classList.add('wrong');
+    else btns[i].classList.add('dim');}
+  setTimeout(function(){curIdx++;showQuestion();},1200);
+}
+
+function timeUp(){
+  answered=true;
+  answers.push({question:curQs[curIdx].question,picked:null,correct:curQs[curIdx].correct,is_correct:false,time:timerMax,points:0});
+  var btns=document.querySelectorAll('.ans-btn');
+  for(var i=0;i<btns.length;i++){btns[i].classList.add('disabled');
+    if(curQs[curIdx].answers[i]===curQs[curIdx].correct)btns[i].classList.add('correct');else btns[i].classList.add('dim');}
+  setTimeout(function(){curIdx++;showQuestion();},1200);
+}
+
+function quitGame(){clearInterval(timerInterval);showScreen('home');loadHome();}
+
+/* END GAME */
+function endGame(){
+  clearInterval(timerInterval);
+  var totalPts=0;var okCount=0;var wrongCount=0;var totalTime=0;
+  for(var i=0;i<answers.length;i++){totalPts+=answers[i].points;if(answers[i].is_correct)okCount++;else wrongCount++;totalTime+=answers[i].time;}
+  var avgTime=answers.length>0?Math.round((totalTime/answers.length)*10)/10:0;
+  var pct=answers.length>0?Math.round((okCount/answers.length)*100):0;
+  if(pct>=80){document.getElementById('resIcon').innerHTML='&#127942;';document.getElementById('resTitle').textContent='Fantastico!';fireConfetti();}
+  else if(pct>=50){document.getElementById('resIcon').innerHTML='&#128170;';document.getElementById('resTitle').textContent='Bene!';}
+  else{document.getElementById('resIcon').innerHTML='&#128172;';document.getElementById('resTitle').textContent='Prossima volta!';}
+  document.getElementById('resSub').textContent=curQuiz.title;
+  document.getElementById('resScore').textContent=totalPts;
+  document.getElementById('resOk').textContent=okCount;
+  document.getElementById('resWrong').textContent=wrongCount;
+  document.getElementById('resAvg').textContent=avgTime+'s';
+  document.getElementById('waShareBtn').href=buildWAShare(curQuiz.title,totalPts);
+  showScreen('result');
+
+  /* CHECK: quiz ancora live prima di salvare */
+  sb.from('sq_quizzes').select('status').eq('id',curQuiz.id).single().then(function(chk){
+    if(chk.data&&chk.data.status!=='live'){
+      showModal('&#9888;','Quiz chiuso','Il quiz e stato chiuso durante la partita.<br>Il risultato non verra salvato.','OK');
+      return;
+    }
+
+    sb.from('sq_results').insert([{quiz_id:curQuiz.id,player_id:player.player_id,player_name:player.player_name,score:totalPts,correct_count:okCount,wrong_count:wrongCount,avg_time:avgTime,answers:answers,completed_at:new Date().toISOString()}]).then(function(r){
+      if(r.error){
+        if(r.error.message&&r.error.message.indexOf('sq_results_unique_play')!==-1){
+          toast('Risultato gia presente','info');
+        }else{
+          toast('Errore salvataggio','error');
+        }
+        return;
+      }
+      var newTotal=(player.total_points||0)+totalPts;var newPlayed=(player.quizzes_played||0)+1;
+      var newLevel='';if(newTotal>=5000)newLevel='Leggenda';else if(newTotal>=3000)newLevel='Campione';else if(newTotal>=1500)newLevel='Esperto';else if(newTotal>=500)newLevel='Appassionato';else newLevel='Esordiente';
+      sb.from('sq_players').update({total_points:newTotal,quizzes_played:newPlayed,level:newLevel,updated_at:new Date().toISOString()}).eq('player_id',player.player_id).then(function(){player.total_points=newTotal;player.quizzes_played=newPlayed;player.level=newLevel;});
+      sb.from('sq_results').select('player_id,score').eq('quiz_id',curQuiz.id).order('score',{ascending:false}).then(function(cr){
+        if(cr.data){var pos=1;for(var k=0;k<cr.data.length;k++){if(cr.data[k].player_id===player.player_id){pos=k+1;break;}}
+          var total=cr.data.length;var posBox=document.getElementById('resPosBox');posBox.style.display='block';
+          if(pos===1){document.getElementById('resPosText').innerHTML='&#128081; Sei <span>1&deg;</span> su '+total+' giocatori!';}
+          else{var diff=cr.data[0].score-totalPts;document.getElementById('resPosText').innerHTML='Sei <span>'+pos+'&deg;</span> su '+total+' &mdash; ti mancano <span>'+diff+' pts</span> dal 1&deg;';}}
+      });
+      sb.from('sq_results').select('*',{count:'exact'}).eq('quiz_id',curQuiz.id).then(function(cr){var cnt=cr.count||0;sb.from('sq_quizzes').update({players_count:cnt}).eq('id',curQuiz.id);});
+    });
+  });
+}
+
+/* CLASSIFICA */
+function loadRank(){
+  if(player){document.getElementById('rankPts').innerHTML='&#11088; '+(player.total_points||0)+' pts';}
+  sb.from('sq_players').select('*').order('total_points',{ascending:false}).limit(50).then(function(r){
+    var box=document.getElementById('rankBox');
+    if(!r.data||r.data.length===0){box.innerHTML='<div class="empty"><div class="icon">&#127942;</div><div class="msg">Nessun giocatore</div></div>';return;}
+    var medals=['&#129351;','&#129352;','&#129353;'];var html='<div class="rank-card">';
+    for(var i=0;i<r.data.length;i++){var p=r.data[i];var isMe=player&&p.player_id===player.player_id;
+      html+='<div class="rank-row'+(isMe?' me':'')+'"><div class="rank-pos">'+(i<3?medals[i]:(i+1))+'</div><div class="rank-name">'+esc(p.player_name);
+      if(p.level)html+=' <span style="font-size:11px;color:#5A6577;">'+esc(p.level)+'</span>';
+      html+='</div><div class="rank-score">'+(p.total_points||0)+'</div><div class="rank-det">'+(p.quizzes_played||0)+' quiz</div></div>';}
+    html+='</div>';box.innerHTML=html;
+  });
+}
+
+autoLogin();
+</script>
+
+</body>
+</html>
